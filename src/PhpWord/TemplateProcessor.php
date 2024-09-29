@@ -933,6 +933,102 @@ class TemplateProcessor
     }
 
     /**
+     * Clone a block.
+     *
+     * @param string $blockname
+     * @param int $clones How many time the block should be cloned
+     * @param bool $replace
+     * @param bool $indexVariables If true, any variables inside the block will be indexed (postfixed with #1, #2, ...)
+     * @param array $variableReplacements Array containing replacements for macros found inside the block to clone
+     */
+    public function cloneHeaderBlock($blockname, $clones = 1, $replace = true, $indexVariables = false, $variableReplacements = null)
+    {
+        $escapedMacroOpeningChars = self::$macroOpeningChars;
+        $escapedMacroClosingChars = self::$macroClosingChars;
+        foreach ($this->tempDocumentHeaders as $index => $headerXML) {
+            $xmlBlock = null;
+            $matches = [];
+            preg_match(
+                //'/(.*((?s)<w:p\b(?:(?!<w:p\b).)*?\{{' . $blockname . '}<\/w:.*?p>))(.*)((?s)<w:p\b(?:(?!<w:p\b).)[^$]*?\{{\/' . $blockname . '}<\/w:.*?p>)/is',
+                '/(.*((?s)<w:p\b(?:(?!<w:p\b).)*?\\' . $escapedMacroOpeningChars . $blockname . $escapedMacroClosingChars . '<\/w:.*?p>))(.*)((?s)<w:p\b(?:(?!<w:p\b).)[^$]*?\\' . $escapedMacroOpeningChars . '\/' . $blockname . $escapedMacroClosingChars . '<\/w:.*?p>)/is',
+                //'/(.*((?s)<w:p\b(?:(?!<w:p\b).)*?\\'. $escapedMacroOpeningChars . $blockname . '}<\/w:.*?p>))(.*)((?s)<w:p\b(?:(?!<w:p\b).)[^$]*?\\'.$escapedMacroOpeningChars.'\/' . $blockname . '}<\/w:.*?p>)/is',
+                $headerXML,
+                $matches
+            );
+    
+            if (isset($matches[3])) {
+                $xmlBlock = $matches[3];
+                if ($indexVariables) {
+                    $cloned = $this->indexClonedVariables($clones, $xmlBlock);
+                } elseif ($variableReplacements !== null && is_array($variableReplacements)) {
+                    $cloned = $this->replaceClonedVariables($variableReplacements, $xmlBlock);
+                } else {
+                    $cloned = [];
+                    for ($i = 1; $i <= $clones; ++$i) {
+                        $cloned[] = $xmlBlock;
+                    }
+                }
+    
+                if ($replace) {
+                    $this->tempDocumentHeaders[$index] = str_replace(
+                        $matches[2] . $matches[3] . $matches[4],
+                        implode('', $cloned),
+                        $headerXML
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Clone a block.
+     *
+     * @param string $blockname
+     * @param int $clones How many time the block should be cloned
+     * @param bool $replace
+     * @param bool $indexVariables If true, any variables inside the block will be indexed (postfixed with #1, #2, ...)
+     * @param array $variableReplacements Array containing replacements for macros found inside the block to clone
+     */
+    public function cloneFooterBlock($blockname, $clones = 1, $replace = true, $indexVariables = false, $variableReplacements = null)
+    {
+        $escapedMacroOpeningChars = self::$macroOpeningChars;
+        $escapedMacroClosingChars = self::$macroClosingChars;
+        foreach ($this->tempDocumentFooters as $index => $footerXML) {
+            $xmlBlock = null;
+            $matches = [];
+            preg_match(
+                //'/(.*((?s)<w:p\b(?:(?!<w:p\b).)*?\{{' . $blockname . '}<\/w:.*?p>))(.*)((?s)<w:p\b(?:(?!<w:p\b).)[^$]*?\{{\/' . $blockname . '}<\/w:.*?p>)/is',
+                '/(.*((?s)<w:p\b(?:(?!<w:p\b).)*?\\' . $escapedMacroOpeningChars . $blockname . $escapedMacroClosingChars . '<\/w:.*?p>))(.*)((?s)<w:p\b(?:(?!<w:p\b).)[^$]*?\\' . $escapedMacroOpeningChars . '\/' . $blockname . $escapedMacroClosingChars . '<\/w:.*?p>)/is',
+                //'/(.*((?s)<w:p\b(?:(?!<w:p\b).)*?\\'. $escapedMacroOpeningChars . $blockname . '}<\/w:.*?p>))(.*)((?s)<w:p\b(?:(?!<w:p\b).)[^$]*?\\'.$escapedMacroOpeningChars.'\/' . $blockname . '}<\/w:.*?p>)/is',
+                $footerXML,
+                $matches
+            );
+    
+            if (isset($matches[3])) {
+                $xmlBlock = $matches[3];
+                if ($indexVariables) {
+                    $cloned = $this->indexClonedVariables($clones, $xmlBlock);
+                } elseif ($variableReplacements !== null && is_array($variableReplacements)) {
+                    $cloned = $this->replaceClonedVariables($variableReplacements, $xmlBlock);
+                } else {
+                    $cloned = [];
+                    for ($i = 1; $i <= $clones; ++$i) {
+                        $cloned[] = $xmlBlock;
+                    }
+                }
+    
+                if ($replace) {
+                    $this->tempDocumentFooters[$index] = str_replace(
+                        $matches[2] . $matches[3] . $matches[4],
+                        implode('', $cloned),
+                        $footerXML
+                    );
+                }
+            }
+        }
+    }
+
+    /**
      * Replace a block.
      *
      * @param string $blockname
